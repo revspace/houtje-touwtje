@@ -1,0 +1,12 @@
+[Unit]
+Description=doorduino-mqtt
+
+[Service]
+ExecStart=/home/doorduino-mqtt/doorduino-mqtt.pl
+User=doorduino-mqtt
+Restart=always
+RestartSec=10
+RestartPreventExitStatus=99
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=mqtt2irc
+
+[Service]
+ExecStart=/home/mqtt2irc/mqtt2irc.pl
+User=mqtt2irc
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
