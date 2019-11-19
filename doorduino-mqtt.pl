@@ -99,12 +99,13 @@ $mqtt->subscribe(
         }
 
         my $by = '';
-#        if ($naam ne '[X]') {
-#            my $temp_id = exists $ppl{$naam}
-#            ? $ppl{$naam}
-#            : ($ppl{$naam} = (keys %ppl) + 1);
+        if ($naam ne '[X]') {
+            my $temp_id = exists $ppl{$naam}
+            ? $ppl{$naam}
+            : ($ppl{$naam} = (keys %ppl) + 1);
+             # rest wel laten staan, doet ook unique counts
 #            $by = " by #$temp_id";
-#        }
+        }
 
         my $time = strftime "%Y-%m-%d %H:%M:%S", localtime;
 
