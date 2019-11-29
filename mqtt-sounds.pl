@@ -37,7 +37,8 @@ sub squeeze {
 }
 
 my %players = (
-    mp3 => ["mpv", "--volume=58", "--" ],
+    #mp3 => ["mpv", "--volume=58", "--" ],
+    mp3 => ["lame_mp3_wrapper" ],
     wav => ["mpv", "--volume=58", "--" ],
 );
 my $squeeze_volume = 30;

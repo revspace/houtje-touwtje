@@ -1,0 +1,2 @@
+#!/bin/bash
+lame --decode $1 - | aplay -t wav -r 44100 -c 2
