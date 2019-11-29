@@ -9,6 +9,7 @@ rsync root@doorduino-zuid:/home/pi/unlock-via-mqtt.pl .
 rsync root@doorduino-zuid:/etc/systemd/system/unlock-via-mqtt.service .
 rsync root@10.42.66.3:/root/mqtt-sounds/mqtt-sounds.pl .
 rsync root@10.42.66.3:/root/mqtt-sounds/squeeze-volume.pl .
+rsync root@10.42.66.3:/usr/local/bin/lame_mp3_wrapper .
 
 
 
