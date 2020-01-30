@@ -119,6 +119,7 @@ $mqtt->subscribe(
         my $m = "$door unlocked$by";
 
         $mqtt->publish("revspace/doorduino" => $m);
+#        $mqtt->publish("revspace/flipdot" => "$door\n unlocked\n $by");
         $mqtt->retain("revspace/doorduino/last" => "$time ($m)");
         $mqtt->retain("revspace/doorduino/unique" => 0 + (keys %ppl));
         $mqtt->retain("revspace/doorduino/count" => ++$openings);
