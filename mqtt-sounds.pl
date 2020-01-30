@@ -108,5 +108,17 @@ $mqtt->run(
             squeeze qw/playlist jump/ => "+1";
         }
     },
+    "revspace/button/vol_up" => sub {
+        squeeze qw/mixer volume +10/;
+    },
+    "revspace/button/vol_down" => sub {
+        squeeze qw/mixer volume -10/;
+    },
+    "revspace/button/shuffle" => sub {
+        LWP::Simple::get($url_shuffle);
+    },
+    "revspace/button/stop" => sub {
+        squeeze qw/pause 1/;
+    },
     map { $_ => \&handle_mqtt } @topics,
 );
