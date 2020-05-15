@@ -49,6 +49,35 @@ sub has_opt_in {
     return 0;
 }
 
+# Basically stolen from pwgen's pw_phonemes.c, dropping the passwordlike stuff
+my %el = qw(a 2 ae 6 ah 6 ai 6 b 1 c 1 ch 5 d 1 e 2 ee 6 ei 6 f 1 g 1 gh 13 h 1
+i 2 ie 6 j 1 k 1 l 1 m 1 n 1 ng 13 o 2 oh 6 oo 6 p 1 ph 5 qu 5 r 1 s 1 sh 5 t 1
+th 5 u 2 v 1 w 1 x 1 y 1 z 1 ij 6 au 6 eu 6 ui 6 oe 6 aa 6 uu 6);
+
+sub random_nick {
+    my ($size) = @_;
+
+    my $pw = "";
+    my $prev = 0;
+    my $w = int rand 2 ? 2 : 1;
+    {
+        my $str = (keys %el)[rand keys %el];
+        my $el = $el{$str};
+        redo if not $el & $w;
+        redo if $el & 8 and $pw eq "";
+        redo if $prev & 2 and $el & 2 and $el & 4;
+        redo if length("$pw$str") > $size;
+
+        $pw .= $str;
+        if (length($pw) < $size) {
+            $w = $w == 1 ? 2 : ($prev & 2 or $el & 4 or rand(10) > 5) ? 1 : 2;
+            $prev = $el;
+            redo;
+        }
+    }
+    return $pw;
+}
+
 my $mqtt = Net::MQTT::Simple->new("127.0.0.1");
 
 my $space_state = 0;
@@ -57,10 +86,13 @@ my $counter_reset = time;
 my $reset_after = 10 * 60;
 my $openings = 0;
 my %ppl;
+my %pseudonyms;
+my %checked_in;
 my $sent_since = 0;
 
 my $opt_in_door = 'opt-in';
 my $opt_out_door = 'opt-out';
+my $check_out_door = 'doei';
 
 $mqtt->subscribe(
     "revspace/state" => sub {
@@ -73,15 +105,7 @@ $mqtt->subscribe(
         my $door = (split m[/], $topic)[2];
         my $naam = $message;
 
-        if ($door eq $opt_in_door) {
-            writelog "$message $door";
-            opt_in $message;
-            $mqtt->publish("revspace-local/doorduino/$door/unlock", "");
-        } elsif ($door eq $opt_out_door) {
-            writelog "$message $door";
-            opt_out $message;
-            $mqtt->publish("revspace-local/doorduino/$door/unlock", "");
-        }
+        my $old_n = keys %checked_in;
 
         # counterstuff
         if (
@@ -90,14 +114,37 @@ $mqtt->subscribe(
             and $state_changed <= time() - $reset_after
         ) {
             %ppl = ();
+            %pseudonyms = ();
+            %checked_in = ();
             $openings = 0;
             $state_changed = time;
             $counter_reset = time;
 
             $mqtt->retain("revspace/doorduino/count-since" => $counter_reset);
+
+            # voor IRC-melding want men snapt het resetmoment anders niet
+            $mqtt->retain("revspace/doorduino/checked-in" => 0);
             $sent_since = 1;
         }
 
+        # fake doors
+        if ($door eq $opt_in_door) {
+            writelog "$naam $door";
+            opt_in $naam;
+            $mqtt->publish("revspace-local/doorduino/$door/unlock", "");
+        } elsif ($door eq $opt_out_door) {
+            delete $pseudonyms{$naam} if has_opt_in($naam);
+
+            writelog "$naam $door";
+            opt_out $naam;
+            $mqtt->publish("revspace-local/doorduino/$door/unlock", "");
+        } elsif ($door eq $check_out_door) {
+            delete $checked_in{$naam};
+        } else {
+            $checked_in{$naam} = 1;
+        }
+
+        # old counter (merge with above?)
         my $by = '';
         if ($naam ne '[X]') {
             my $temp_id = exists $ppl{$naam}
@@ -107,11 +154,14 @@ $mqtt->subscribe(
 #            $by = " by #$temp_id";
         }
 
+        # notifications
+        my $pseudo = $pseudonyms{$naam} ||= random_nick(5 + int rand 4);
+
         my $time = strftime "%Y-%m-%d %H:%M:%S", localtime;
 
-        $by = has_opt_in($naam) ? " by $naam" : "";
+        $by = has_opt_in($naam) ? " by $naam" : " by /tmp/$pseudo";
 
-        if ($door eq $opt_out_door and $by =~ / by /) {
+        if ($door eq $opt_out_door and $by =~ m[ by (?!/tmp/)]) {
             print STDERR "Opt-out failed; aborting daemon.\n";
             exit 99;  # RestartPreventExitStatus=99 in systemd unit
         }
@@ -122,6 +172,7 @@ $mqtt->subscribe(
 #        $mqtt->publish("revspace/flipdot" => "$door\n unlocked\n $by");
         $mqtt->retain("revspace/doorduino/last" => "$time ($m)");
         $mqtt->retain("revspace/doorduino/unique" => 0 + (keys %ppl));
+        $mqtt->retain("revspace/doorduino/checked-in" => 0 + (keys %checked_in));
         $mqtt->retain("revspace/doorduino/count" => ++$openings);
 
         $mqtt->retain("revspace/doorduino/count-since" => $counter_reset) if not $sent_since;

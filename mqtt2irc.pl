@@ -1,6 +1,7 @@
 #!/usr/bin/perl -w
 
 use strict;
+use v5.28;
 use Net::MQTT::Simple;
 use Time::HiRes qw(time);
 
@@ -23,6 +24,15 @@ $mqtt->subscribe(
         "revspace/doorduino" => sub {
             my ($topic, $message) = @_;
             mekker $message;
+        },
+        "revspace/doorduino/checked-in" => sub {
+            my ($topic, $message) = @_;
+            $message += 0;
+            state $prev = 0;
+            if ($message != $prev) {
+                mekker "n = $message";
+                $prev = $message;
+            }
         },
 	"revspace/button/nomz" => sub {
 		my ($topic, $message) = @_;
