@@ -122,8 +122,10 @@ $mqtt->subscribe(
 
             $mqtt->retain("revspace/doorduino/count-since" => $counter_reset);
 
-            # voor IRC-melding want men snapt het resetmoment anders niet
+            # voor IRC-melding meteen doen want men snapt het resetmoment anders niet
             $mqtt->retain("revspace/doorduino/checked-in" => 0);
+            $mqtt->retain("revspace-local/doorduino/checked-in" => "");
+            $mqtt->retain("revspace-local/doorduino/checked-in/unixtime" => "");
             $sent_since = 1;
         }
 
@@ -140,8 +142,8 @@ $mqtt->subscribe(
             $mqtt->publish("revspace-local/doorduino/$door/unlock", "");
         } elsif ($door eq $check_out_door) {
             delete $checked_in{$naam};
-        } else {
-            $checked_in{$naam} = 1;
+        } elsif ($naam !~ /^\$/) {
+            $checked_in{$naam} ||= time;
         }
 
         # old counter (merge with above?)
@@ -169,10 +171,15 @@ $mqtt->subscribe(
         my $m = "$door unlocked$by";
 
         $mqtt->publish("revspace/doorduino" => $m);
-#        $mqtt->publish("revspace/flipdot" => "$door\n unlocked\n $by");
+        my $n = 0 + keys %checked_in;
+#        my $regel2 = ($n == 9 ? "maak plaats" : $n == 10 ? "ga naar huis" : "      ");
+        my $regel2 = ($n >= 5 ? "ga naar huis" : "      ");
+        $mqtt->publish("revspace/flipdot" => "n = " . (0 + keys %checked_in) . "\n $regel2");
         $mqtt->retain("revspace/doorduino/last" => "$time ($m)");
         $mqtt->retain("revspace/doorduino/unique" => 0 + (keys %ppl));
-        $mqtt->retain("revspace/doorduino/checked-in" => 0 + (keys %checked_in));
+        $mqtt->retain("revspace/doorduino/checked-in" => $n);
+        $mqtt->retain("revspace-local/doorduino/checked-in" => join(" ", sort keys %checked_in));
+        $mqtt->retain("revspace-local/doorduino/checked-in/unixtime" => join(" ", %checked_in{sort keys %checked_in}));
         $mqtt->retain("revspace/doorduino/count" => ++$openings);
 
         $mqtt->retain("revspace/doorduino/count-since" => $counter_reset) if not $sent_since;
