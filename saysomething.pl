@@ -89,7 +89,7 @@ my $timer = timeout_add(500, sub {
                     next;
                 };
                 my @queue = @{ $queue{$fn} };
-                if ($fn eq "freenode_revspace") {
+                if ($fn eq "liberachat_revspace") {
                     revspace_topic_hack($server, $chan, $channame, $_)
                         for @queue;
                 }

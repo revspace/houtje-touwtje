@@ -8,7 +8,7 @@ use Time::HiRes qw(time);
 my $mqtt = Net::MQTT::Simple->new("127.0.0.1");
 
 sub mekker {
-    my $fn = "/home/bar/saysomething/freenode_revspace";
+    my $fn = "/home/bar/saysomething/liberachat_revspace";
     open my $fh, ">>", $fn or warn "open: $fn: $!";
     print STDOUT "@_\n";
     print $fh    "@_\n";
@@ -51,7 +51,7 @@ $mqtt->subscribe(
 		if ($message eq 'IDLE') {
 			if ($lichtgordijn_start) {
 				my $delta = time() - $lichtgordijn_start;
-				open my $fh, ">>/home/bar/saysomething/freenode_revspace";
+				open my $fh, ">>/home/bar/saysomething/liberachat_revspace";
 				printf $fh "Lichtgordijn %.1fs\n", $delta;
 			}
 			$lichtgordijn_start = undef;
