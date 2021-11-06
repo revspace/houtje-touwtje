@@ -16,6 +16,8 @@ FILES='revbank.{accounts,products,market} .revbank.{log,undo}'
 
 ssh -i $IDENTITY $USER@$HOST "cat > script.sh && cd $DIR && tar -cz $FILES && echo $HOSTNAME:$ARCHIVE > ~/last_success" < $0 > $ARCHIVE
 
+[ -s "$ARCHIVE" ] || rm -- "$ARCHIVE"
+
 tar -xOf `ls -1t $ARCHIVE_DIR/*tgz | head -n2 | tail -n1` .revbank.log > /tmp/$$-prev
 tar -xOf `ls -1t $ARCHIVE_DIR/*tgz | head -n1` .revbank.log > /tmp/$$-cur
 

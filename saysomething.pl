@@ -37,7 +37,7 @@ my $timer = timeout_add(500, sub {
         opendir my $dh, "saysomething" or return;
         my @entries = grep -f "saysomething/$_", readdir $dh;
         if (@entries) {
-            $silence = 0;
+           $silence = 0;
             for my $fn (@entries) {
                 my @lines = read_file("saysomething/$fn")
                     or next;
@@ -89,7 +89,7 @@ my $timer = timeout_add(500, sub {
                     next;
                 };
                 my @queue = @{ $queue{$fn} };
-                if ($fn eq "freenode_revspace") {
+                if ($fn eq "liberachat_revspace") {
                     revspace_topic_hack($server, $chan, $channame, $_)
                         for @queue;
                 }

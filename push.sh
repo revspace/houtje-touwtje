@@ -19,4 +19,7 @@ for host in 10.42.42.45 10.42.42.47; do
     echo done!
 done
 
+# Zonder secrets en zonder comments voor extradoei
+perl -nle'print s/:\w+//r if not /^\s*#/' global.acl > /home/doorduino-mqtt/ibuttons.acl
+
 eval $(ssh-agent -k)  # kill
